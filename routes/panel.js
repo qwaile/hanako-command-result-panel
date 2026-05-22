@@ -515,6 +515,8 @@ function renderWidgetPage(ctx, c, surface) {
     overflow: hidden;
   }
 
+  #app { height: 100%; }
+
   .widget { height: 100%; display: flex; flex-direction: column; }
 
   .header {
@@ -541,8 +543,18 @@ function renderWidgetPage(ctx, c, surface) {
   .scroll-area {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
     padding: ${isWidget ? "6px" : "12px"};
   }
+
+  .scroll-area::-webkit-scrollbar { width: 5px; }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 3px;
+    transition: background 0.2s;
+  }
+  .scroll-area::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
   /* 空状态 */
   .empty-state {
@@ -721,11 +733,6 @@ function renderWidgetPage(ctx, c, surface) {
   .confirm-btn:hover { border-color: var(--text-secondary); color: var(--text); }
   .confirm-ok { background: #ef4444; color: #fff; border-color: #ef4444; }
   .confirm-ok:hover { background: #dc2626; border-color: #dc2626; }
-
-  /* 滚动条 */
-  .scroll-area::-webkit-scrollbar { width: 4px; }
-  .scroll-area::-webkit-scrollbar-track { background: transparent; }
-  .scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
 <body data-hana-theme="${theme.replace(/"/g, '&quot;')}" data-surface="${surface}">
