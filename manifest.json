@@ -1,0 +1,36 @@
+{
+  "manifestVersion": 1,
+  "id": "command-result-panel",
+  "name": "Command Result Panel",
+  "version": "1.0.0",
+  "description": "可视化命令执行结果——可折叠卡片展示 stdout/stderr/退出码/耗时，支持 SSE 实时推送",
+  "minAppVersion": "0.82.0",
+  "trust": "full-access",
+  "ui": {
+    "hostCapabilities": []
+  },
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "widget": {
+      "title": { "zh": "命令面板", "en": "Commands" },
+      "route": "/widget",
+      "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><polyline points=\"4 17 10 11 4 5\"/><line x1=\"12\" y1=\"19\" x2=\"20\" y2=\"19\"/></svg>"
+    },
+    "configuration": {
+      "properties": {
+        "maxRecords": {
+          "type": "integer",
+          "default": 50,
+          "title": "最大记录数",
+          "description": "内存中保留的最大命令执行记录数"
+        },
+        "autoCollapse": {
+          "type": "boolean",
+          "default": true,
+          "title": "成功时自动折叠",
+          "description": "退出码为 0 时默认折叠卡片，仅显示标题行"
+        }
+      }
+    }
+  }
+}
