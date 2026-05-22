@@ -1,10 +1,13 @@
 /**
  * command-result-panel/extensions/interceptor.js
  *
- * Pi SDK 扩展：自动拦截 Agent 的 bash 工具调用并上报到命令面板。
+ * Pi SDK 扩展：自动拦截 Agent 的 bash / terminal 工具调用并上报到命令面板。
  *
- * 使用 tool_execution_start / tool_execution_end 事件，
- * 覆盖所有工具执行场景（LLM 驱动 + Agent 直接调用）。
+ * 覆盖工具：
+ *   - bash      → 一次性 shell 命令
+ *   - terminal  → 长时间运行的终端会话（start / write action）
+ *
+ * 使用 tool_execution_start / tool_execution_end 事件。
  *
  * 与插件的关系：完全通过 HTTP API 通信，零耦合。
  */
@@ -36,14 +39,29 @@ export default function (pi) {
     return { base: _serverBase, token: _token };
   }
 
+  // 匹配需要捕获的工具名
+  function isShellTool(name) {
+    return name === "bash" || name === "terminal";
+  }
+
+  /** 从工具参数中提取可读的命令文本 */
+  function extractCommand(args) {
+    if (!args) return "";
+    if (args.command) return args.command;
+    if (args.action === "start" && args.command) return args.command;
+    if (args.action === "write" && args.chars) return args.chars;
+    return JSON.stringify(args);
+  }
+
   // ── 步骤 1：命令开始时记录上下文 ──
 
   pi.on("tool_execution_start", async (event) => {
-    if (event.toolName !== "bash") return;
+    if (!isShellTool(event.toolName)) return;
 
     running.set(event.toolCallId, {
-      command: event.args.command || "",
-      cwd: event.args.cwd || process.cwd(),
+      toolName: event.toolName,
+      command: extractCommand(event.args),
+      cwd: event.args?.cwd || process.cwd(),
       startTime: Date.now(),
     });
   });
@@ -51,13 +69,13 @@ export default function (pi) {
   // ── 步骤 2：命令结束时提取结果并上报 ──
 
   pi.on("tool_execution_end", async (event) => {
-    if (event.toolName !== "bash") return;
+    if (!isShellTool(event.toolName)) return;
 
     const ctx = running.get(event.toolCallId);
     if (!ctx) return;
     running.delete(event.toolCallId);
 
-    // 提取 stdout
+    // 提取输出文本
     let stdout = "";
     let exitCode = 0;
 
@@ -77,6 +95,7 @@ export default function (pi) {
     }
 
     if (event.isError) exitCode = 1;
+    if (!ctx.command) return; // 没有命令内容，跳过
 
     const duration = Date.now() - ctx.startTime;
     const { base, token } = ensureServer();
