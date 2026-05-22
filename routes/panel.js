@@ -111,6 +111,7 @@ function render() {
         '<button class="header-btn" onclick="expandAll()">全部展开</button>' +
         '<button class="header-btn" onclick="collapseAll()">全部折叠</button>' +
         '<button class="header-btn" onclick="clearAll()">清空</button>' +
+        '<button class="header-btn" onclick="refreshRecords()" id="refreshBtn">↻ 刷新</button>' +
       '</div>' +
     '</div>' +
     '<div class="scroll-area" id="scrollArea">' +
@@ -262,6 +263,30 @@ function showConfirmModal(msg) {
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) { close(); resolve(false); }
     });
+  });
+}
+
+function refreshRecords() {
+  var btn = document.getElementById('refreshBtn');
+  if (btn && btn.disabled) return; // 防止重复点击
+  if (btn) { btn.disabled = true; btn.textContent = '↻ 刷新中…'; }
+
+  authFetch(BASE + '/records?limit=' + MAX_RECORDS).then(function(r) {
+    return r.json();
+  }).then(function(data) {
+    if (data.records) {
+      records = data.records;
+      // 更新 lastRecordId
+      for (var i = 0; i < records.length; i++) {
+        if (records[i].id > lastRecordId) lastRecordId = records[i].id;
+      }
+      expandedMap = {};
+      render();
+    }
+  })['catch'](function(err) {
+    console.error('refresh failed:', err);
+  }).then(function() {
+    if (btn) { btn.disabled = false; btn.textContent = '↻ 刷新'; }
   });
 }
 
